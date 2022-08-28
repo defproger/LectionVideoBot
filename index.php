@@ -158,37 +158,38 @@ $bot->getVideo(function (Bot $b, $video) use ($user) {
     } else $b->Message('И зачем ты мне это прислал?')->Send();
 });
 
+function checkivent($b, $id)
+{
+    $users = db_getAll('users');
+    $ivents = db_query("select * from `inventory` where `vid` = '{$id[2]}'");
+
+
+    $inline = [];
+    foreach ($users as $user) {
+        if (!$user['admin']):
+            $checker = false;
+            foreach ($ivents as $ivent) {
+                if ($ivent['uid'] !== $user['id']) continue;
+                else $checker = true;
+            }
+            if ($checker)
+                $inline[] = [Msg::dataBtn($user['name'] . " ✅", "none")];
+            else
+                $inline[] = [Msg::dataBtn($user['name'], "add-{$id[2]}-user-{$user['id']}")];
+        endif;
+    }
+    $inline[] = [Msg::dataBtn('Обновить', "reloadivent_{$id[2]}")];
+    $b->Edit()
+        ->replyMarkup(
+            Msg::Inline(
+                $inline
+            )
+        )
+        ->Send();
+}
+
 $bot->data('*', function (Bot $b, $data) {
     if (preg_match('/(\w+)_(\d+)/', $data, $id)):
-        function checkivent($b, $id)
-        {
-            $users = db_getAll('users');
-            $ivents = db_query("select * from `inventory` where `vid` = '{$id[2]}'");
-
-
-            $inline = [];
-            foreach ($users as $user) {
-                if (!$user['admin']):
-                    $checker = false;
-                    foreach ($ivents as $ivent) {
-                        if ($ivent['uid'] !== $user['id']) continue;
-                        else $checker = true;
-                    }
-                    if ($checker)
-                        $inline[] = [Msg::dataBtn($user['name'] . " ✅", "none")];
-                    else
-                        $inline[] = [Msg::dataBtn($user['name'], "add-{$id[2]}-user-{$user['id']}")];
-                endif;
-            }
-            $inline[] = [Msg::dataBtn('Обновить', "reloadivent_{$id[2]}")];
-            $b->Edit()
-                ->replyMarkup(
-                    Msg::Inline(
-                        $inline
-                    )
-                )
-                ->Send();
-        }
 
         switch ($id[1]) {
             case 'name':
